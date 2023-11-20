@@ -23,7 +23,7 @@ const taskSchema = new mongoose.Schema({
   taskName: String,
 });
 
-const Task = new mongoose.model("Item", taskSchema);
+const Task = new mongoose.model("Task", taskSchema);
 
 // API routes
 app.get("/", (req, res) => {
@@ -46,12 +46,41 @@ app.post("/save-task", (req, res) => {
     .catch((err) => console.log(err));
 });
 
-// other api endpoints
-app.delete("/delete-task/:id", (req, res) => {
-  console.log(req.body);
+app.get("/get-all-tasks", (req, res) => {
+  console.log("Reading all tasks...");
+  Task.find()
+    .then((docs) => {
+      console.log(docs);
+      res.json(docs);
+    })
+    .catch((err) => console.log(err));
 });
+
 app.delete("/delete-task/:id", (req, res) => {
-  console.log(req.body);
+  console.log(req.params);
+
+  Task.deleteOne({ _id: req.params.id })
+    .then((doc) => {
+      console.log(doc);
+      res.send("Task deleted");
+    })
+    .catch((err) => console.log(err));
+});
+
+app.put("/update-task/:id", (req, res) => {
+  console.log(req.params, req.body);
+
+  Task.findOneAndUpdate(
+    { _id: req.params.id },
+    {
+      taskName: req.body.taskName,
+    }
+  )
+    .then((doc) => {
+      console.log(doc);
+      res.send("Task updated");
+    })
+    .catch((err) => console.log(err));
 });
 
 // server launch
