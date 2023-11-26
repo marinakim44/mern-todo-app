@@ -1,23 +1,34 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { Button, Form } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import {
+  addTaskRedux,
+  deleteTaskRedux,
+  updateTaskRedux,
+} from "./slices/taskSlice";
 
 function App() {
   // local data state
   const [task, setTask] = useState("");
-  const [tasks, setTasks] = useState([]);
+  const dispatch = useDispatch();
+
+  // const [tasks, setTasks] = useState([]);
   const [isUpdate, setIsUpdate] = useState(false);
   const [updatedTask, setUpdatedTask] = useState({});
 
-  useEffect(() => {
-    axios
-      .get("http://localhost:3001/get-all-tasks")
-      .then((res) => {
-        console.log(res.data);
-        setTasks(res.data);
-      })
-      .catch((err) => console.log(err));
-  }, []);
+  const tasks = useSelector((state) => state.task);
+
+  // useEffect(() => {
+  //   axios
+  //     .get("http://localhost:3001/get-all-tasks")
+  //     .then((res) => {
+  //       console.log(res.data);
+  //       setTasks(res.data);
+  //     })
+  //     .catch((err) => console.log(err));
+  // }, []);
 
   // function
   const handleChange = (e) => {
@@ -28,31 +39,41 @@ function App() {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    axios
-      .post("http://localhost:3001/save-task", {
-        taskName: task,
+    dispatch(
+      addTaskRedux({
+        name: task,
       })
-      .then((res) => {
-        console.log(res.data);
-        if (res.data === "Task saved") {
-          console.log("task added successfully...");
-          setTask("");
-          window.location.reload();
-        }
-      })
-      .catch((err) => console.log(err));
+    );
+
+    setTask("");
+
+    // axios
+    //   .post("http://localhost:3001/save-task", {
+    //     taskName: task,
+    //   })
+    //   .then((res) => {
+    //     console.log(res.data);
+    //     if (res.data === "Task saved") {
+    //       console.log("task added successfully...");
+    //       setTask("");
+    //       window.location.reload();
+    //     }
+    //   })
+    //   .catch((err) => console.log(err));
   };
 
   const deleteTask = (id) => {
-    axios
-      .delete(`http://localhost:3001/delete-task/${id}`)
-      .then((res) => {
-        console.log(res.data);
-        if (res.data === "Task deleted") {
-          window.location.reload();
-        }
-      })
-      .catch((err) => console.log(err));
+    dispatch(deleteTaskRedux({ id: id }));
+
+    // axios
+    //   .delete(`http://localhost:3001/delete-task/${id}`)
+    //   .then((res) => {
+    //     console.log(res.data);
+    //     if (res.data === "Task deleted") {
+    //       window.location.reload();
+    //     }
+    //   })
+    //   .catch((err) => console.log(err));
   };
 
   const handleChangeUpdate = (e) => {
@@ -67,18 +88,28 @@ function App() {
   };
 
   const updateTask = (id) => {
-    console.log("Updating task");
+    dispatch(
+      updateTaskRedux({
+        id: id,
+        name: updatedTask[id],
+      })
+    );
 
-    axios
-      .put(`http://localhost:3001/update-task/${id}`, {
-        taskName: updatedTask[id],
-      })
-      .then((res) => {
-        console.log(res.data);
-        setIsUpdate(false);
-      })
-      .catch((err) => console.log(err));
+    setIsUpdate(false);
+
+    // console.log("Updating task");
+    // axios
+    //   .put(`http://localhost:3001/update-task/${id}`, {
+    //     taskName: updatedTask[id],
+    //   })
+    //   .then((res) => {
+    //     console.log(res.data);
+    //     setIsUpdate(false);
+    //   })
+    //   .catch((err) => console.log(err));
   };
+
+  console.log(tasks);
 
   return (
     <div>
@@ -122,16 +153,15 @@ function App() {
               <Form.Control
                 onClick={() => setIsUpdate(true)}
                 onChange={handleChangeUpdate}
-                value={
-                  updatedTask[elem._id] ? updatedTask[elem._id] : elem.taskName
-                }
-                name={elem._id}
+                value={updatedTask[elem.id] ? updatedTask[elem.id] : elem.name}
+                // value={elem.id}
+                name={elem.id}
                 style={{ marginRight: 5 }}
               />
               <Button
                 variant={isUpdate ? "outline-primary" : "success"}
                 onClick={() =>
-                  isUpdate ? updateTask(elem._id) : deleteTask(elem._id)
+                  isUpdate ? updateTask(elem.id) : deleteTask(elem.id)
                 }
               >
                 {isUpdate ? "Update" : "Done"}
@@ -139,6 +169,7 @@ function App() {
             </div>
           );
         })}
+        {/* <Button onClick={() => navigate("counter")}>Go to counter</Button> */}
       </div>
     </div>
   );
