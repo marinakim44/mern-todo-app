@@ -1,58 +1,34 @@
-import { useState, useEffect } from "react";
-import axios from "axios";
+import { useState } from "react";
 import { Button, Form } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { addTask, deleteTaskRedux, updateTaskRedux } from "./slices/taskSlice";
 
 function App() {
+  // variables
+  const dispatch = useDispatch();
+
   // local data state
   const [task, setTask] = useState("");
-  const [tasks, setTasks] = useState([]);
   const [isUpdate, setIsUpdate] = useState(false);
   const [updatedTask, setUpdatedTask] = useState({});
 
-  useEffect(() => {
-    axios
-      .get("http://localhost:3001/get-all-tasks")
-      .then((res) => {
-        console.log(res.data);
-        setTasks(res.data);
-      })
-      .catch((err) => console.log(err));
-  }, []);
+  const reduxTasks = useSelector((state) => state.task);
 
   // function
   const handleChange = (e) => {
-    console.log("event", e.target.value);
     setTask(e.target.value);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    axios
-      .post("http://localhost:3001/save-task", {
-        taskName: task,
-      })
-      .then((res) => {
-        console.log(res.data);
-        if (res.data === "Task saved") {
-          console.log("task added successfully...");
-          setTask("");
-          window.location.reload();
-        }
-      })
-      .catch((err) => console.log(err));
+    dispatch(addTask({ name: task }));
+    setTask("");
   };
 
   const deleteTask = (id) => {
-    axios
-      .delete(`http://localhost:3001/delete-task/${id}`)
-      .then((res) => {
-        console.log(res.data);
-        if (res.data === "Task deleted") {
-          window.location.reload();
-        }
-      })
-      .catch((err) => console.log(err));
+    dispatch(deleteTaskRedux({ id: id }));
   };
 
   const handleChangeUpdate = (e) => {
@@ -67,17 +43,9 @@ function App() {
   };
 
   const updateTask = (id) => {
-    console.log("Updating task");
-
-    axios
-      .put(`http://localhost:3001/update-task/${id}`, {
-        taskName: updatedTask[id],
-      })
-      .then((res) => {
-        console.log(res.data);
-        setIsUpdate(false);
-      })
-      .catch((err) => console.log(err));
+    console.log("Updating task", id);
+    dispatch(updateTaskRedux({ id: id, name: updatedTask[id] }));
+    setIsUpdate(false);
   };
 
   return (
@@ -106,7 +74,7 @@ function App() {
           </Button>
         </div>
 
-        {tasks.map((elem, index) => {
+        {reduxTasks.map((elem, index) => {
           return (
             <div
               style={{
@@ -122,16 +90,14 @@ function App() {
               <Form.Control
                 onClick={() => setIsUpdate(true)}
                 onChange={handleChangeUpdate}
-                value={
-                  updatedTask[elem._id] ? updatedTask[elem._id] : elem.taskName
-                }
-                name={elem._id}
+                value={updatedTask[elem.id] ? updatedTask[elem.id] : elem.name}
+                name={elem.id}
                 style={{ marginRight: 5 }}
               />
               <Button
                 variant={isUpdate ? "outline-primary" : "success"}
                 onClick={() =>
-                  isUpdate ? updateTask(elem._id) : deleteTask(elem._id)
+                  isUpdate ? updateTask(elem.id) : deleteTask(elem.id)
                 }
               >
                 {isUpdate ? "Update" : "Done"}
